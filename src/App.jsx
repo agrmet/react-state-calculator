@@ -6,6 +6,7 @@ function App() {
   const [rightPanel, setRightDisplay] = useState([0])
   const [operation, setOperation] = useState('+')
   const [result, setResult] = useState(0)
+  const [storage, setStorage] = useState(0)
 
   const updateOperation = (operation) => {
     switch (operation) {
@@ -26,68 +27,159 @@ function App() {
     }
   }
 
+
+  function findDecimal(numArray) {
+    for (let i = 0; i < numArray.length; i++) {
+      const element = numArray[i];
+      if (isNaN(element)) {
+        return i
+      }
+      
+    }
+    return 0
+  }
 function toNumber(panel) {
   let result = 0
-  for (let index = 0; index < panel.length; index++) {
-    const element = panel[index];
-    result += element * Math.pow(10, panel.length - 1 - index)
-    console.log(result)
-    
+  const decimalIndex = findDecimal(panel)
+
+  if (decimalIndex === 0) {
+    for (let i = 0; i < panel.length; i++) {
+      const element = panel[i]
+      result += element * Math.pow(10, panel.length - 1 - i)
+      
+    }
+  } else {
+    for (let i = 0; i < decimalIndex; i++) {
+      const element = panel[i]
+      
+      result += element * Math.pow(10, decimalIndex - i - 1)
+      console.log(result);
+    }
+    for (let i = decimalIndex; i < panel.length; i++) {
+      
+      if (i === decimalIndex ) continue
+      const element = panel[i];
+      result += element * Math.pow(10, decimalIndex - i)
+    }
   }
+
   return result
 }
 
-  const calculate = () => {
-    let lefNum = toNumber(leftPanel)
-    let rightNum = toNumber(rightPanel)
+function storageToArray(number) {
+  const array = []
+  const numberString = String(number)
 
-    console.log(`Left number is ${lefNum}`);
-    console.log(`Right number is ${rightNum}`);
-
-    switch (operation) {
-      case '+':
-        setResult(lefNum + rightNum)
-        break;
-      case '-':
-        setResult(lefNum - rightNum)
-        break;
-      case '*':
-        setResult(lefNum * rightNum)
-        break;
-      case '/':
-        setResult((lefNum / rightNum).toFixed(3))
-        break;
-      default:
-        break;
+  for (let i = 0; i < numberString.length; i++) {
+    const element = Number(numberString[i])
+    if (isNaN(element)){
+      array.push(numberString[i])
+      continue
     }
+    array.push(element)
+  }
+
+  return array
+}
+
+const recallStorage = (panel) => {
+  const array = storageToArray(storage)
+
+  switch (panel) {
+    case 'left':
+      setLeftDisplay(array)
+      break
+    case 'right':
+      setRightDisplay(array)
+      break
+    default:
+      break
+  }
+}
+
+function containsDecimal(panel) {
+  console.log(panel);
+  
+  
+  for (let i = 0; i < panel.length; i++) {
+    const element = Number(panel[i])
+    if (isNaN(element)) {
+      return true
+      
+    }
+    
+  }
+}
+
+const addDecimal = (panel) => {
+  let newPanel
+  switch (panel) {
+    case 'left':
+      if (containsDecimal(leftPanel)) break
+      newPanel = [...leftPanel, '.']
+      setLeftDisplay(newPanel)
+      break
+    case 'right':
+      if (containsDecimal(rightPanel)) return
+      newPanel = [...rightPanel, '.']
+      setRightDisplay(newPanel)
+      break
+    default:
+      break
+  }
+}
+
+const store = () => {
+  setStorage(result)
+}
+
+const calculate = () => {
+  let leftNum = toNumber(leftPanel)
+  let rightNum = toNumber(rightPanel)
+  let result = 0
+
+  switch (operation) {
+    case '+':
+      result = leftNum + rightNum
+      setResult(result)
+      break;
+    case '-':
+      result = leftNum - rightNum
+      setResult(result.toFixed(3))
+      break;
+    case '*':
+      result = leftNum * rightNum
+      setResult(result.toFixed(3))
+      break;
+    case '/':
+      result = (leftNum / rightNum).toFixed(3)
+      setResult(result)
+      break;
+    default:
+      break;
+  }
   }
   const updateLeftPanel = (number) => {
     let newLeftPanel
 
-    if (leftPanel[0] === 0) {
-      console.log("Left panel was zero")
+    if (leftPanel[0] === 0 && leftPanel.length === 1) {
       newLeftPanel = [number]
     } else {
-      console.log("Left panel was not zero")
       newLeftPanel = [...leftPanel, number]
     }
 
     setLeftDisplay(newLeftPanel)
-    console.log(newLeftPanel)
   };
 
   const updateRightPanel = (number) => {
     let newRightPanel
 
-    if (rightPanel[0] === 0) {
-      console.log("Right panel was zero");
+    if (rightPanel[0] === 0 && rightPanel.length === 1) {
       newRightPanel = [number]
     } else {
-      console.log("Right panel was other than zero");
       newRightPanel = [...rightPanel, number]
     }
     setRightDisplay(newRightPanel)     
-    console.log(newRightPanel);
      
   }
 
@@ -114,7 +206,9 @@ function toNumber(panel) {
           <button onClick={() => updateLeftPanel(8)}>8</button>
           <button onClick={() => updateLeftPanel(9)}>9</button>
           <button onClick={() => updateLeftPanel(0)}>0</button>
+          <button onClick={() => addDecimal('left')}>.</button>
           <button onClick={() => clearLeftPanel()}>Clear</button>
+          <button onClick={() => recallStorage('left')}>Recall</button>
         </div>
       </div>
 
@@ -141,7 +235,9 @@ function toNumber(panel) {
           <button onClick={() => updateRightPanel(8)}>8</button>
           <button onClick={() => updateRightPanel(9)}>9</button>
           <button onClick={() => updateRightPanel(0)}>0</button>
+          <button onClick={() => addDecimal('right')}>.</button>
           <button onClick={() => clearRightPanel()}>Clear</button>
+          <button onClick={() => recallStorage('right')}>Recall</button>
         </div>
       </div>
 
@@ -149,6 +245,7 @@ function toNumber(panel) {
         <p>{result}</p>
         <div>
           <button onClick={() => calculate()}>=</button>
+          <button onClick={() => store()}>Store</button>
         </div>
       </div>
     </div>
